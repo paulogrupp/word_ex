@@ -1,5 +1,5 @@
 defmodule WordEx.Type do
-  @type game_state :: :game_start | :won | :lost | :good_guess | :bad_guess | :already_guessed
+  @type game_state :: :game_start | :won | :lost | :good_guess | :bad_guess | :invalid_input
   @type guess_letters_state :: :correct | :misplaced | :wrong
   @type last_attempt_result :: %{String.t() => guess_letters_state}
   @type tally :: %{

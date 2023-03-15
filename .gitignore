@@ -24,3 +24,12 @@ word_ex-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# The directory Mix will write compiled artifacts to.
+word_ex/_build/
+word_ex/cover/
+word_ex/deps/
+word_ex/doc/
+word_ex/.fetch
+word_exword_ex-*.tar
+word_ex/tmp/
