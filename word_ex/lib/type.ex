@@ -4,7 +4,7 @@ defmodule WordEx.Type do
   @type last_attempt_result :: %{String.t() => guess_letters_state}
   @type tally :: %{
           turns_left: integer,
-          game_state: state,
+          game_state: game_state,
           letters: list(String.t()),
           last_attempt_result: last_attempt_result
         }
