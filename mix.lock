@@ -1,0 +1,10 @@
+%{
+  "dialyxir": {:hex, :dialyxir, "1.2.0", "58344b3e87c2e7095304c81a9ae65cb68b613e28340690dfe1a5597fd08dec37", [:mix], [{:erlex, ">= 0.2.6", [hex: :erlex, repo: "hexpm", optional: false]}], "hexpm", "61072136427a851674cab81762be4dbeae7679f85b1272b6d25c3a839aff8463"},
+  "dictionary": {:git, "https://github.com/paulogrupp/dictionary-ex.git", "de195abc087bbc12af7a31491f491ea30c3bcdfd", [branch: "main"]},
+  "erlex": {:hex, :erlex, "0.2.6", "c7987d15e899c7a2f34f5420d2a2ea0d659682c06ac607572df55a43753aa12e", [:mix], [], "hexpm", "2ed2e25711feb44d52b17d2780eabf998452f6efda104877a3881c2f8c0c0c75"},
+  "nimble_parsec": {:hex, :nimble_parsec, "1.2.3", "244836e6e3f1200c7f30cb56733fd808744eca61fd182f731eac4af635cc6d0b", [:mix], [], "hexpm", "c8d789e39b9131acf7b99291e93dae60ab48ef14a7ee9d58c6964f59efb570b0"},
+  "sweet_xml": {:hex, :sweet_xml, "0.7.3", "debb256781c75ff6a8c5cbf7981146312b66f044a2898f453709a53e5031b45b", [:mix], [], "hexpm", "e110c867a1b3fe74bfc7dd9893aa851f0eed5518d0d7cad76d7baafd30e4f5ba"},
+  "unicode": {:hex, :unicode, "1.15.0", "8477b079cd6000c8072d1e509642e48020bf3c0418f2dab9b8e8d98a70394d40", [:mix], [], "hexpm", "73f375c613825812357c70c419bdbf4d31338473970624f2bed249c7392fd1e8"},
+  "unicode_set": {:hex, :unicode_set, "1.3.0", "aa9b7836b5d39fe493213d6c08eee83853746ecfd9f120cdfd1e2f96da3f71f1", [:mix], [{:nimble_parsec, "~> 1.2.2 or ~> 1.3", [hex: :nimble_parsec, repo: "hexpm", optional: false]}, {:unicode, "~> 1.13", [hex: :unicode, repo: "hexpm", optional: false]}], "hexpm", "7343aa1aa3dcc1f54a53781b7b96c35249633d3b0e922fabfc8b31db95495339"},
+  "unicode_transform": {:hex, :unicode_transform, "0.3.0", "1d52b3eb0ae71630cf57d27f349e76f5aa4df9f05dc30608bfc7ca3b53663880", [:mix], [{:sweet_xml, "~> 0.7", [hex: :sweet_xml, repo: "hexpm", optional: false]}, {:unicode_set, "~> 1.1", [hex: :unicode_set, repo: "hexpm", optional: false]}], "hexpm", "931d071371d7c77a3efea8040fc66f223abbc77fe5646f33deeae91d554e0069"},
+}
