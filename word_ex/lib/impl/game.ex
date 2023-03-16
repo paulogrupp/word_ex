@@ -8,7 +8,7 @@ defmodule WordEx.Impl.Game do
           game_state: Type.game_state(),
           letters: list(String.t()),
           normalized_letters: list(String.t()),
-          valid_words: %{String.t() => String.t()}
+          last_attempt: list(String.t())
         }
 
   defstruct(
@@ -16,7 +16,7 @@ defmodule WordEx.Impl.Game do
     game_state: :game_start,
     letters: [],
     normalized_letters: [],
-    valid_words: %{}
+    last_attempt: []
   )
 
   def new_game do
@@ -26,26 +26,27 @@ defmodule WordEx.Impl.Game do
   def new_game(word) do
     %__MODULE__{
       letters: word |> generate_codepoints(),
-      normalized_letters: word |> AsciiConverter.transform() |> generate_codepoints(),
+      normalized_letters: word |> AsciiConverter.transform() |> generate_codepoints()
     }
   end
 
-  @spec make_move(t, String.t()) :: {t, Type.tally()}
-  def make_move(game = %{game_state: state}, _guess)
+  @spec make_guess(t, String.t()) :: {t, Type.tally()}
+  def make_guess(game = %{game_state: state}, _guess)
       when state in [:won, :lost] do
     game
     |> return_with_tally
   end
 
-  def make_move(game, guess) do
+  def make_guess(game, guess) do
     guess =
       AsciiConverter.transform(guess)
       |> String.downcase()
+      |> String.codepoints()
 
     game
     |> accept_guess(
       guess,
-      valid_word?(guess)
+      valid_word?(Enum.join(guess))
     )
     |> return_with_tally
   end
@@ -57,23 +58,18 @@ defmodule WordEx.Impl.Game do
   end
 
   defp accept_guess(game, guess, _valid_word) do
-    %{game | used: MapSet.put(game.used, guess)}
-    |> score_guess(Enum.member?(game.normalized_letters, guess))
+    game |> score_guess(guess)
   end
 
   ####################################################################################
 
-  defp score_guess(game, _good_guess = true) do
-    new_state = maybe_won(MapSet.subset?(MapSet.new(game.normalized_letters), game.used))
-    %{game | game_state: new_state}
-  end
+  # defp score_guess(game, _good_guess = true) do
+  #   new_state = maybe_won(MapSet.subset?(MapSet.new(game.normalized_letters), game.used))
+  #   %{game | game_state: new_state}
+  # end
 
-  defp score_guess(game = %{turns_left: 1}, _bad_guess) do
-    %{game | game_state: :lost, turns_left: 0}
-  end
-
-  defp score_guess(game, _bad_guess) do
-    %{game | game_state: :bad_guess, turns_left: game.turns_left - 1}
+  defp score_guess(game, guess) do
+    %{game | turns_left: game.turns_left - 1, last_attempt: guess}
   end
 
   ####################################################################################
@@ -82,8 +78,8 @@ defmodule WordEx.Impl.Game do
     %{
       turns_left: game.turns_left,
       game_state: game.game_state,
-      letters: reveal_guessed_letters(game),
-      last_attempt_result: %{"a" => :correct}
+      letters: game.letters
+      # last_attempt_result: score_last_attempt(game)
     }
   end
 
@@ -114,6 +110,17 @@ defmodule WordEx.Impl.Game do
 
   defp maybe_won(_), do: :good_guess
 
-  defp valid_word?(guess) do
+  defp valid_word?(word) do
+    WordEx.word_exists?(word)
+  end
+
+  defp score_letters(word, guess) do
+    score = []
+
+    Enum.map(guess, fn letter ->
+      if Enum.member?(word, letter), do: "right", else: "wrong"
+    end)
+
+    score
   end
 end
