@@ -27,7 +27,6 @@ defmodule WordEx.Impl.Game do
     %__MODULE__{
       letters: word |> generate_codepoints(),
       normalized_letters: word |> AsciiConverter.transform() |> generate_codepoints(),
-      valid_words: word_list_hash()
     }
   end
 
@@ -116,12 +115,5 @@ defmodule WordEx.Impl.Game do
   defp maybe_won(_), do: :good_guess
 
   defp valid_word?(guess) do
-  end
-
-  defp word_list_hash() do
-    Dictionary.word_list(@default_word_length)
-    |> Enum.reduce(%{}, fn word, acc ->
-      Map.put(acc, AsciiConverter.transform(word), word)
-    end)
   end
 end
