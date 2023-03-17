@@ -74,6 +74,10 @@ defmodule WordEx.Impl.Game do
 
   ####################################################################################
 
+  @spec tally(
+          atom
+          | %{:game_state => any, :letters => any, :turns_left => any, optional(any) => any}
+        ) :: %{game_state: any, letters: any, turns_left: any}
   def tally(game) do
     %{
       turns_left: game.turns_left,
@@ -114,13 +118,41 @@ defmodule WordEx.Impl.Game do
     WordEx.word_exists?(word)
   end
 
-  defp score_letters(word, guess) do
-    score = []
+  def score_letters(guess, word) do
+    solution_chars_taken = compare_correct_cases(guess, word)
+    should_absent_indexes = handle_taken_cases(guess, word, solution_chars_taken)
+    WordEx.Impl.Game.compare_absency_and_position(should_absent_indexes, guess, word)
+  end
 
-    Enum.map(guess, fn letter ->
-      if Enum.member?(word, letter), do: "right", else: "wrong"
+  def compare_absency_and_position(should_absent_indexes, guess, solution) do
+    Enum.zip([guess, solution, should_absent_indexes])
+    |> Enum.map(fn {guess_letter, solution_letter, absent_index} ->
+      {guess_letter == solution_letter, Enum.member?(solution, guess_letter), is_nil(absent_index)}
     end)
+    |> Enum.map(fn
+      {true, _, _} -> "correct"
+      {_, false, _} -> "absent"
+      {_, true, true} -> "present"
+      {_, _, false} -> "absent"
+    end)
+  end
 
-    score
+  def compare_correct_cases(guess, solution) do
+    Enum.zip(guess, solution)
+    |> Enum.map(fn {guess_letter, solution_letter} ->
+      guess_letter == solution_letter
+    end)
+  end
+
+  def handle_taken_cases(guess, solution, solution_chars_taken) do
+    Enum.with_index(guess, fn guess_letter, guess_index ->
+      Enum.with_index(solution, fn solution_letter, solution_index ->
+        {solution_letter, solution_index}
+      end)
+      |> Enum.find_index(fn {solution_letter, solution_index} ->
+        guess_letter == solution_letter && Enum.at(solution_chars_taken, solution_index) &&
+          solution_index != guess_index
+      end)
+    end)
   end
 end
