@@ -14,7 +14,7 @@ defmodule WordEx.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {WordEx.Runtime.WordHandler.Application, []},
+      mod: {WordEx.Runtime.Application, []},
       extra_applications: [:logger]
     ]
   end
