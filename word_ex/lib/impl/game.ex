@@ -19,6 +19,8 @@ defmodule WordEx.Impl.Game do
     last_attempt: []
   )
 
+  defdelegate word_exists?(word), to: WordEx.Runtime.WordHandler.Server
+
   def new_game do
     Dictionary.random_word(@default_word_length) |> new_game()
   end
@@ -30,7 +32,6 @@ defmodule WordEx.Impl.Game do
     }
   end
 
-  @spec make_guess(t, String.t()) :: {t, Type.tally()}
   def make_guess(game = %{game_state: state}, _guess)
       when state in [:won, :lost] do
     game
@@ -58,42 +59,36 @@ defmodule WordEx.Impl.Game do
   end
 
   defp accept_guess(game, guess, _valid_word) do
-    game |> score_guess(guess)
+    %{game | last_attempt: guess} |> score_guess(evaluate_guess(game, guess))
   end
 
   ####################################################################################
 
-  # defp score_guess(game, _good_guess = true) do
-  #   new_state = maybe_won(MapSet.subset?(MapSet.new(game.normalized_letters), game.used))
-  #   %{game | game_state: new_state}
-  # end
+  defp score_guess(game, [:correct]) do
+    %{game | game_state: :won}
+  end
 
-  defp score_guess(game, guess) do
-    %{game | turns_left: game.turns_left - 1, last_attempt: guess}
+  defp score_guess(game = %{turns_left: 1}, _evaluation) do
+    %{game | game_state: :lost, turns_left: 0}
+  end
+
+  defp score_guess(game, _evaluation) do
+    %{game | game_state: :guess_evaluated, turns_left: game.turns_left - 1}
   end
 
   ####################################################################################
 
-  @spec tally(
-          atom
-          | %{:game_state => any, :letters => any, :turns_left => any, optional(any) => any}
-        ) :: %{game_state: any, letters: any, turns_left: any}
   def tally(game) do
     %{
       turns_left: game.turns_left,
       game_state: game.game_state,
-      letters: game.letters
-      # last_attempt_result: score_last_attempt(game)
+      last_attempt_result: score_letters(game.last_attempt, game.letters)
     }
   end
 
-  defp return_with_tally(game) do
-    {game, tally(game)}
-  end
+  defp return_with_tally(game), do: {game, tally(game)}
 
-  def reveal_guessed_letters(game = %{game_state: :lost}) do
-    game.letters
-  end
+  def reveal_guessed_letters(game = %{game_state: :lost}), do: game.letters
 
   def reveal_guessed_letters(game) do
     game.letters
@@ -110,31 +105,27 @@ defmodule WordEx.Impl.Game do
   def maybe_reveal(true, letter), do: letter
   def maybe_reveal(_, _), do: "_"
 
-  defp maybe_won(true), do: :won
-
-  defp maybe_won(_), do: :good_guess
-
-  defp valid_word?(word) do
-    WordEx.word_exists?(word)
+  def evaluate_guess(game, guess) do
+    Enum.uniq(score_letters(guess, game.letters))
   end
 
-  def score_letters(guess, word) do
-    solution_chars_taken = compare_correct_cases(guess, word)
-    should_absent_indexes = handle_taken_cases(guess, word, solution_chars_taken)
-    WordEx.Impl.Game.compare_absency_and_position(should_absent_indexes, guess, word)
+  defp valid_word?(word), do: word_exists?(word)
+
+  def score_letters([], _), do: []
+
+  def score_letters(guess, solution) do
+    solution_chars_taken = compare_correct_cases(guess, solution)
+    {guess, solution} = strip_correct_cases(guess, solution, solution_chars_taken)
+    present_cases = Enum.reverse(strip_present_cases(guess, solution))
+    compare_absency_and_position(solution, present_cases)
   end
 
-  def compare_absency_and_position(should_absent_indexes, guess, solution) do
-    Enum.zip([guess, solution, should_absent_indexes])
-    |> Enum.map(fn {guess_letter, solution_letter, absent_index} ->
-      {guess_letter == solution_letter, Enum.member?(solution, guess_letter),
-       is_nil(absent_index)}
-    end)
+  def compare_absency_and_position(solution, present_cases) do
+    Enum.zip([solution, present_cases])
     |> Enum.map(fn
-      {true, _, _} -> "correct"
-      {_, false, _} -> "absent"
-      {_, true, true} -> "present"
-      {_, _, false} -> "absent"
+      {nil, _} -> :correct
+      {_, nil} -> :wrong
+      {_, _} -> :misplaced
     end)
   end
 
@@ -145,15 +136,31 @@ defmodule WordEx.Impl.Game do
     end)
   end
 
-  def handle_taken_cases(guess, solution, solution_chars_taken) do
-    Enum.with_index(guess, fn guess_letter, guess_index ->
-      Enum.with_index(solution, fn solution_letter, solution_index ->
-        {solution_letter, solution_index}
-      end)
-      |> Enum.find_index(fn {solution_letter, solution_index} ->
-        guess_letter == solution_letter && Enum.at(solution_chars_taken, solution_index) &&
-          solution_index != guess_index
-      end)
+  def strip_correct_cases(guess, solution, taken_cases) do
+    Enum.zip([guess, solution, taken_cases])
+    |> Enum.map(fn
+      {_, _, true} -> {nil, nil}
+      {guess_letter, solution_letter, _} -> {guess_letter, solution_letter}
     end)
+    |> Enum.unzip()
   end
+
+  def strip_present_cases(guess, solution), do: strip_present_cases(guess, solution, [])
+
+  def strip_present_cases([guess_letter | guess], solution, indexes) do
+    found =
+      Enum.find_index(solution, fn
+        solution_letter -> !is_nil(solution_letter) && solution_letter == guess_letter
+      end)
+
+    solution = strip_solution_by_index(found, solution)
+    indexes = [found | indexes]
+    strip_present_cases(guess, solution, indexes)
+  end
+
+  def strip_present_cases([], _, indexes), do: indexes
+
+  def strip_solution_by_index(nil, solution), do: solution
+
+  def strip_solution_by_index(index, solution), do: List.replace_at(solution, index, nil)
 end
