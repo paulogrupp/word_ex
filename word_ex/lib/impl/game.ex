@@ -127,7 +127,8 @@ defmodule WordEx.Impl.Game do
   def compare_absency_and_position(should_absent_indexes, guess, solution) do
     Enum.zip([guess, solution, should_absent_indexes])
     |> Enum.map(fn {guess_letter, solution_letter, absent_index} ->
-      {guess_letter == solution_letter, Enum.member?(solution, guess_letter), is_nil(absent_index)}
+      {guess_letter == solution_letter, Enum.member?(solution, guess_letter),
+       is_nil(absent_index)}
     end)
     |> Enum.map(fn
       {true, _, _} -> "correct"
